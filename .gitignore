@@ -70,3 +70,5 @@ target/
 .ipynb_checkpoints
 
 *.h5
+/hengs models/
+/.idea/
