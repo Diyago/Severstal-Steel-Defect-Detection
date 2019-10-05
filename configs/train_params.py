@@ -4,3 +4,5 @@ data_folder = "./input/severstal-steel-defect-detection/"
 test_data_folder = "./input/severstal-steel-defect-detection/test_images"
 
 isDebug = True
+unet_encoder = 'resnet34'
+attention_type = None #scse
