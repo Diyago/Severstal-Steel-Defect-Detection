@@ -14,9 +14,10 @@ if __name__ == '__main__':
         losses = model_trainer.losses
         dice_scores = model_trainer.dice_scores  # overall dice
         iou_scores = model_trainer.iou_scores
-        plot(losses, "BCE loss")
-        plot(dice_scores, "Dice score")
-        plot(iou_scores, "IoU score")
+        plot(losses, "BCE loss", cur_fold)
+        plot(dice_scores, "Dice score", cur_fold)
+        plot(iou_scores, "IoU score", cur_fold)
 
         del model_trainer
+        break
         gc.collect()

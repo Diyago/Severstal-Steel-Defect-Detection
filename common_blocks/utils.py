@@ -1,5 +1,5 @@
 import numpy as np
-import matplotlib as plt
+import matplotlib.pyplot as plt
 import torch
 import random
 import numpy as np
@@ -38,7 +38,7 @@ def make_mask(row_id, df):
     return fname, masks
 
 
-def plot(scores, name):
+def plot(scores, name, fold=0, safe_pic=True):
     plt.figure(figsize=(15, 5))
     plt.plot(range(len(scores["train"])), scores["train"], label=f'train {name}')
     plt.plot(range(len(scores["train"])), scores["val"], label=f'val {name}')
@@ -46,7 +46,10 @@ def plot(scores, name):
     plt.xlabel('Epoch')
     plt.ylabel(f'{name}')
     plt.legend()
-    plt.show()
+    if safe_pic:
+        plt.savefig('./logs/{}_fold_{}.png'.format(name, fold))
+    else:
+        plt.show()
 
 
 def set_seed(seed=42):

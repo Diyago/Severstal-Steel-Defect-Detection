@@ -18,6 +18,11 @@ import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader, Dataset, sampler
 from matplotlib import pyplot as plt
 from .metric import Meter, epoch_log
+from .dataloader import provider_cv, provider_trai_test_split
+import sys
+
+sys.path.append('..')
+from ..configs.train_params import *
 
 
 class Trainer_cv(object):
@@ -103,7 +108,7 @@ class Trainer_cv(object):
             self.iterate(epoch, "train")
             state = {
                 "epoch": epoch,
-                "best_loss": self.best_loss,
+                "best_metric": self.best_loss,
                 "state_dict": self.net.state_dict(),
                 "optimizer": self.optimizer.state_dict(),
             }
@@ -111,11 +116,11 @@ class Trainer_cv(object):
             self.scheduler.step(val_loss)
             if val_loss < self.best_loss:
                 print("******** New optimal found, saving state ********")
-                state["best_loss"] = self.best_loss = val_loss
+                state["best_metric"] = self.best_loss = val_loss
                 torch.save(state, "./model_weights/model_fold_{}.pth".format(self.current_fold))
             print()
 
-            
+
 class Trainer_split(object):
     '''This class takes care of training and validation of our model'''
 
@@ -195,7 +200,7 @@ class Trainer_split(object):
             self.iterate(epoch, "train")
             state = {
                 "epoch": epoch,
-                "best_loss": self.best_loss,
+                "best_metric": self.best_loss,
                 "state_dict": self.net.state_dict(),
                 "optimizer": self.optimizer.state_dict(),
             }
@@ -204,6 +209,6 @@ class Trainer_split(object):
                 self.scheduler.step(val_loss)
             if val_loss < self.best_loss:
                 print("******** New optimal found, saving state ********")
-                state["best_loss"] = self.best_loss = val_loss
+                state["best_metric"] = self.best_loss = val_loss
                 torch.save(state, "./model.pth")
             print()

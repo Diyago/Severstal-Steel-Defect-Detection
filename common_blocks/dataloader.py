@@ -16,6 +16,14 @@ from torch.nn import functional as F
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader, Dataset, sampler
+from .utils import make_mask
+from .metric import Meter, epoch_log
+from albumentations import (HorizontalFlip, ShiftScaleRotate, Normalize, Resize, Compose, GaussNoise)
+from albumentations.pytorch import ToTensor
+import sys
+
+sys.path.append('..')
+from configs.train_params import *
 
 warnings.filterwarnings("ignore")
 seed = 69
@@ -138,7 +146,11 @@ def provider_cv(
     num_workers=4,
 )
     """
-    df = pd.read_csv(df_path).head(500)
+    if isDebug:
+        df = pd.read_csv(df_path).head(200)
+    else:
+        df = pd.read_csv(df_path)
+
     df['ImageId'], df['ClassId'] = zip(*df['ImageId_ClassId'].str.split('_'))
     df['ClassId'] = df['ClassId'].astype(int)
     df = df.pivot(index='ImageId', columns='ClassId', values='EncodedPixels')
@@ -165,12 +177,12 @@ class Trainer_cv(object):
     def __init__(self, model, current_fold=0):
         self.current_fold = current_fold
         self.total_folds = 5
-        self.num_workers = 6
+        self.num_workers = 4
         self.batch_size = {"train": 4, "val": 4}
         self.accumulation_steps = 1  # 32 // self.batch_size['train']
         self.lr = 5e-4
         self.num_epochs = 1
-        self.best_loss = float("inf")
+        self.best_metric = 0  # float("inf")
         self.phases = ["train", "val"]
         self.device = torch.device("cuda:0")
         torch.set_default_tensor_type("torch.cuda.FloatTensor")
@@ -235,21 +247,22 @@ class Trainer_cv(object):
         self.dice_scores[phase].append(dice)
         self.iou_scores[phase].append(iou)
         torch.cuda.empty_cache()
-        return epoch_loss
+        return epoch_loss, dice
 
     def start(self):
         for epoch in range(self.num_epochs):
             self.iterate(epoch, "train")
             state = {
                 "epoch": epoch,
-                "best_loss": self.best_loss,
+                "best_metric": self.best_metric,
                 "state_dict": self.net.state_dict(),
                 "optimizer": self.optimizer.state_dict(),
             }
-            val_loss = self.iterate(epoch, "val")
+            val_loss, val_dice = self.iterate(epoch, "val")
             self.scheduler.step(val_loss)
-            if val_loss < self.best_loss:
+            if val_dice > self.best_metric:
                 print("******** New optimal found, saving state ********")
-                state["best_loss"] = self.best_loss = val_loss
-                torch.save(state, "./model_weights/model_fold_{}.pth".format(self.current_fold))
+                state["best_metric"] = self.best_metric = val_dice
+                torch.save(state, "./model_weights/model_fold_{}_dice_{}.pth".format(self.current_fold,
+                                                                                     val_dice))
             print()

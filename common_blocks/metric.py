@@ -1,25 +1,11 @@
 import os
-from sklearn.model_selection import StratifiedKFold
-import cv2
-import pdb
-import time
-import warnings
 import random
-import numpy as np
-import pandas as pd
-from tqdm import tqdm_notebook as tqdm
-from torch.optim.lr_scheduler import ReduceLROnPlateau
-from sklearn.model_selection import train_test_split
-import torch
-import torch.nn as nn
-from torch.nn import functional as F
-import torch.optim as optim
-import torch.backends.cudnn as cudnn
-from torch.utils.data import DataLoader, Dataset, sampler
-from matplotlib import pyplot as plt
+import warnings
 
-# from albumentations import (HorizontalFlip, ShiftScaleRotate, Normalize, Resize, Compose, GaussNoise)
-# from albumentations.torch import ToTensor
+import numpy as np
+import torch
+import torch.backends.cudnn as cudnn
+
 warnings.filterwarnings("ignore")
 seed = 69
 random.seed(seed)
@@ -27,6 +13,35 @@ os.environ["PYTHONHASHSEED"] = str(seed)
 np.random.seed(seed)
 torch.cuda.manual_seed(seed)
 torch.backends.cudnn.deterministic = True
+
+
+class Meter:
+    '''A meter to keep track of iou and dice scores throughout an epoch'''
+
+    def __init__(self, phase, epoch):
+        self.base_threshold = 0.5  # <<<<<<<<<<< here's the threshold
+        self.base_dice_scores = []
+        self.dice_neg_scores = []
+        self.dice_pos_scores = []
+        self.iou_scores = []
+
+    def update(self, targets, outputs):
+        probs = torch.sigmoid(outputs)
+        dice, dice_neg, dice_pos, _, _ = metric(probs, targets, self.base_threshold)
+        self.base_dice_scores.append(dice)
+        self.dice_pos_scores.append(dice_pos)
+        self.dice_neg_scores.append(dice_neg)
+        preds = predict(probs, self.base_threshold)
+        iou = compute_iou_batch(preds, targets, classes=[1])
+        self.iou_scores.append(iou)
+
+    def get_metrics(self):
+        dice = np.mean(self.base_dice_scores)
+        dice_neg = np.mean(self.dice_neg_scores)
+        dice_pos = np.mean(self.dice_pos_scores)
+        dices = [dice, dice_neg, dice_pos]
+        iou = np.nanmean(self.iou_scores)
+        return dices, iou
 
 
 def predict(X, threshold):
@@ -104,7 +119,7 @@ def epoch_log(phase, epoch, epoch_loss, meter, start):
     dices, iou = meter.get_metrics()
     dice, dice_neg, dice_pos = dices
     print("Loss: %0.4f | IoU: %0.4f | dice: %0.4f | dice_neg: %0.4f | dice_pos: %0.4f" % (
-    epoch_loss, iou, dice, dice_neg, dice_pos))
+        epoch_loss, iou, dice, dice_neg, dice_pos))
     return dice, iou
 
 
