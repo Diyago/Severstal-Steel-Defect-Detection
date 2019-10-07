@@ -7,7 +7,7 @@ isDebug = False
 unet_encoder = 'resnet34'
 attention_type = None  # scse
 num_epochs = 20
-LEARNING_RATE = 5e-4 / 2
+LEARNING_RATE = 5e-4/2
 batch_size = {"train": 8, "val": 6}
 model_weights = [
     './model_weights/backup/model_resnet34_fold_0_epoch_6_dice_0.7099842373015202.pth',
@@ -18,7 +18,7 @@ model_weights = [
 ]
 
 crop_image_size = (256, 416)
-INITIAL_MINIMUM_DICE = 0.71
+INITIAL_MINIMUM_DICE = 0.65
 
 if isDebug:
     num_epochs = 1

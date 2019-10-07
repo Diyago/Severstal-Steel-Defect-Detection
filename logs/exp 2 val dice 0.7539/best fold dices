@@ -1,0 +1,9 @@
+Training resnet32 baseline, finetuned on crops
+
+MEAN dice 0.750473200
+
+0.7603
+0.7490
+0.75866
+0.7512
+0.7503

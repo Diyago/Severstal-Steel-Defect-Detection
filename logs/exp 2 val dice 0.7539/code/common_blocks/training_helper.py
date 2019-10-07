@@ -209,7 +209,6 @@ class Trainer_split(object):
                 val_loss = self.iterate(epoch, "val")
                 self.scheduler.step(val_loss)
             if val_loss < self.best_loss:
-                # TODO save weights on last epoch too
                 print("******** New optimal found, saving state ********")
                 state["best_metric"] = self.best_loss = val_loss
                 torch.save(state, "./model.pth")
