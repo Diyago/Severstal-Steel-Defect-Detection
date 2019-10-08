@@ -1,0 +1,12 @@
+Training resnet32 + scce blocks - increased batch size without accumation, trained on crops. RADAM + bcedice loss. Fixed
+metric DICE
+
+MEAN dice 0.90855
+
+0.8991
+0.9125
+0.9169
+0.9046
+0.9097
+
+(0.8991+0.9125+0.9169+0.9046+0.9097)/5

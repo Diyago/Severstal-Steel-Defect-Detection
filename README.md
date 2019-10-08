@@ -7,7 +7,8 @@ Project structure:
     - metric.py - function with metric functions
     - training_helper.py - main class for training with cross validation or train_test_split
     - utils.py - useful utils for logs, model loading, mask transformation
-    
+    - losses.py - different segmentation losses
+    - optimizers.py - SOTA optimizers
 * configs
    - train_params.py (in development)
    1. isDebug - then is True, pipelines finishes to work in minutes (useful for code testing)
