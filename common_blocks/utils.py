@@ -67,7 +67,7 @@ def set_seed(seed=42):
     torch.backends.cudnn.deterministic = True
 
 
-def load_model(_model_weights, is_inference=False):
+def load_model_unet(_model_weights, is_inference=False):
     print('Using weights {}'.format(_model_weights))
     if _model_weights == 'imagenet':
         model = Unet(unet_encoder,
@@ -112,7 +112,7 @@ def load_model_fpn(_model_weights, is_inference=False):
         return model
     else:
         model = FPN(unet_encoder,
-                    encoder_weights=None,  # "imagenet",
+                    encoder_weights=None,
                     classes=4,
                     activation=None)
         if is_inference:

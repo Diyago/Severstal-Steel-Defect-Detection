@@ -5,7 +5,7 @@ test_data_folder = "./input/severstal-steel-defect-detection/test_images"
 
 isDebug = False
 unet_encoder = 'resnet34'
-ATTENTION_TYPE = 'scse'  # None
+ATTENTION_TYPE = None  # None # Only for UNET scse
 num_epochs = 30
 LEARNING_RATE = 5e-4
 BATCH_SIZE = {"train": 20, "val": 3}
@@ -20,7 +20,7 @@ EARLY_STOPING = 10
 # ]
 
 crop_image_size = (256, 416)
-INITIAL_MINIMUM_DICE = 0.82
+INITIAL_MINIMUM_DICE = 0.85
 
 if isDebug:
     num_epochs = 1

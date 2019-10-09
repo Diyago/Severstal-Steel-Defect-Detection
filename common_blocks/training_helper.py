@@ -112,6 +112,7 @@ class Trainer_cv(object):
         for epoch in range(self.num_epochs):
             if EARLY_STOPING is not None and epoch_wo_improve_score >= EARLY_STOPING:
                 print('Early stopping {}'.format(EARLY_STOPING))
+                break
             self.iterate(epoch, "train")
             state = {
                 "epoch": epoch,
@@ -126,6 +127,7 @@ class Trainer_cv(object):
                 state["best_metric"] = self.best_metric = val_dice
                 torch.save(state, "./model_weights/model_{}_fold_{}_epoch_{}_dice_{}.pth".format(
                     unet_encoder, self.current_fold, epoch, val_dice))
+                epoch_wo_improve_score = 0
             else:
                 epoch_wo_improve_score += 1
             print()

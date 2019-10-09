@@ -1,0 +1,6 @@
+Training resnet32 +   increased batch size without accumation, trained on crops. RADAM + bcedice loss. Fixed
+metric DICE
+
+MEAN dice  (0.9058+0.91245+0.9077+0.9139+0.9080)/5
+0.9095700000000001
+ 
