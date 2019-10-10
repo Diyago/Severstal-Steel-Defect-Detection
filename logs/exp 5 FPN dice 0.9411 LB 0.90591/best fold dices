@@ -2,7 +2,7 @@ Training FPN resnet32 +   increased batch size with accumation 64, trained on cr
 metric DICE
 
 MEAN dice  (0.9402+0.9421)/2
-0.911
+0.9411
 
 
  

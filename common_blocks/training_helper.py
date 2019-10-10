@@ -20,8 +20,7 @@ from matplotlib import pyplot as plt
 from .metric import Meter, epoch_log
 from .dataloader import provider_cv, provider_trai_test_split
 import sys
-from .losses import BCEDiceLoss
-import kornia
+from .losses import BCEDiceLoss, FocalLoss
 
 sys.path.append('..')
 from configs.train_params import *
@@ -44,7 +43,7 @@ class Trainer_cv(object):
         self.device = torch.device("cuda:0")
         torch.set_default_tensor_type("torch.cuda.FloatTensor")
         self.net = model
-        self.criterion = BCEDiceLoss()#FocalLoss(num_class=4)  # BCEDiceLoss()  # torch.nn.BCEWithLogitsLoss()
+        self.criterion = FocalLoss(logits=True)  # BCEDiceLoss()#FocalLoss(num_class=4)  # BCEDiceLoss()  # torch.nn.BCEWithLogitsLoss()
         self.optimizer = RAdam(self.net.parameters(), lr=self.lr)  # optim.Adam(self.net.parameters(), lr=self.lr)
         self.scheduler = ReduceLROnPlateau(self.optimizer, mode="min", patience=2, verbose=True)
         self.net = self.net.to(self.device)
