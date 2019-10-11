@@ -3,10 +3,10 @@ train_df_path = './input/severstal-steel-defect-detection/train.csv'
 data_folder = "./input/severstal-steel-defect-detection/"
 test_data_folder = "./input/severstal-steel-defect-detection/test_images"
 
-isDebug = False
-unet_encoder = 'resnet34'
+isDebug = True
+unet_encoder = 'se-resnext50'
 ATTENTION_TYPE = None  # None # Only for UNET scse
-num_epochs = 30
+num_epochs = 45
 LEARNING_RATE = 5e-4
 BATCH_SIZE = {"train": 4, "val": 3}
 model_weights = 'imagenet'
