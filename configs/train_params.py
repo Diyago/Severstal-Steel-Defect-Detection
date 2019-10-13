@@ -2,24 +2,20 @@ sample_submission_path = './input/severstal-steel-defect-detection/sample_submis
 train_df_path = './input/severstal-steel-defect-detection/train.csv'
 data_folder = "./input/severstal-steel-defect-detection/"
 test_data_folder = "./input/severstal-steel-defect-detection/test_images"
+FOLDS_ids = './input/folds.pkl'
 
-isDebug = True
-unet_encoder = 'se-resnext50'
+isDebug = False
+unet_encoder = 'se_resnext101_32x4d'
 ATTENTION_TYPE = None  # None # Only for UNET scse
 num_epochs = 45
-LEARNING_RATE = 5e-4
-BATCH_SIZE = {"train": 4, "val": 3}
+LEARNING_RATE = 5e-4 / 3
+BATCH_SIZE = {"train": 3, "val": 1}
+TOTAL_FOLDS = 10
 model_weights = 'imagenet'
 EARLY_STOPING = 15
-# [
-#     './model_weights/backup/model_resnet34_fold_0_epoch_6_dice_0.7099842373015202.pth',
-#     './model_weights/backup/model_resnet34_fold_1_epoch_15_dice_0.7354779279952208.pth',
-#     './model_weights/backup/model_resnet34_fold_2_epoch_18_dice_0.7640665367553647.pth',
-#     './model_weights/backup/model_resnet34_fold_3_epoch_18_dice_0.7427178866012297.pth',
-#     './model_weights/backup/model_resnet34_fold_4_epoch_19_dice_0.7650702263993822.pth'
-# ]
 
-crop_image_size = None #(256, 416)
+#model_weights = './model_weights/model_se_resnext50_32x4d_fold_0_epoch_7_dice_0.935771107673645.pth'
+crop_image_size = None  # (256, 416)
 INITIAL_MINIMUM_DICE = 0.89
 
 if isDebug:

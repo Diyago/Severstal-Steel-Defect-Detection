@@ -1,14 +1,13 @@
 import gc
 from common_blocks.training_helper import Trainer_cv
 from common_blocks.utils import plot, set_seed
-from configs.train_params import num_epochs, model_weights, BATCH_SIZE
+from configs.train_params import *
 from common_blocks.utils import load_model_unet, load_model_fpn
+from segmentation_models_pytorch import Unet, FPN, PSPNet
 
 if __name__ == '__main__':
     set_seed()
-    for cur_fold in range(0, 5):
-        if cur_fold == 0:
-            continue
+    for cur_fold in range(0, TOTAL_FOLDS):
         print('Current FOLD {}'.format(cur_fold))
         model_trainer = Trainer_cv(load_model_fpn(model_weights),
                                    num_epochs,
@@ -22,4 +21,3 @@ if __name__ == '__main__':
 
         del model_trainer
         gc.collect()
-

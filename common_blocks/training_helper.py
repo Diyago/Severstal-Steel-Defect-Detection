@@ -32,10 +32,10 @@ class Trainer_cv(object):
 
     def __init__(self, model, num_epochs, current_fold=0, batch_size={"train": 4, "val": 4}):
         self.current_fold = current_fold
-        self.total_folds = 10
+        self.total_folds = TOTAL_FOLDS
         self.num_workers = 4
         self.batch_size = batch_size
-        self.accumulation_steps = 64 // self.batch_size['train']
+        self.accumulation_steps = 128 // self.batch_size['train']
         self.lr = LEARNING_RATE
         self.num_epochs = num_epochs
         self.best_metric = INITIAL_MINIMUM_DICE  # float("inf")
@@ -43,15 +43,15 @@ class Trainer_cv(object):
         self.device = torch.device("cuda:0")
         torch.set_default_tensor_type("torch.cuda.FloatTensor")
         self.net = model
-        self.criterion = FocalLoss(logits=True)  # BCEDiceLoss()#FocalLoss(num_class=4)  # BCEDiceLoss()  # torch.nn.BCEWithLogitsLoss()
+        self.criterion = BCEDiceLoss()   # BCEDiceLoss()#FocalLoss(num_class=4)  # BCEDiceLoss()  # torch.nn.BCEWithLogitsLoss()
         self.optimizer = RAdam(self.net.parameters(), lr=self.lr)  # optim.Adam(self.net.parameters(), lr=self.lr)
-        self.scheduler = ReduceLROnPlateau(self.optimizer, mode="min", patience=2, verbose=True)
+        self.scheduler = ReduceLROnPlateau(self.optimizer, factor=0.9, mode="min", patience=2, verbose=True)
         self.net = self.net.to(self.device)
         cudnn.benchmark = True
         self.dataloaders = {
             phase: provider_cv(
                 fold=self.current_fold,
-                total_folds=5,
+                total_folds=self.total_folds,
                 data_folder=data_folder,
                 df_path=train_df_path,
                 phase=phase,
@@ -133,8 +133,9 @@ class Trainer_cv(object):
             else:
                 epoch_wo_improve_score += 1
             print()
-        torch.save(state, "./model_weights/model_{}_fold_{}_last_epoch_{}_dice_{}.pth".format(
-            unet_encoder, self.current_fold, epoch, val_dice))
+        if num_epochs > 1:
+            torch.save(state, "./model_weights/model_{}_fold_{}_last_epoch_{}_dice_{}.pth".format(
+                unet_encoder, self.current_fold, epoch, val_dice))
 
 
 """ WARNING DEPRECATED

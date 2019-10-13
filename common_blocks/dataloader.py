@@ -1,6 +1,7 @@
 import os
 from sklearn.model_selection import StratifiedKFold, KFold
 import cv2
+import joblib
 import pdb
 import time
 import warnings
@@ -15,7 +16,7 @@ from torch.utils.data import DataLoader, Dataset, sampler
 from .utils import make_mask
 from .metric import Meter, epoch_log
 from albumentations import (HorizontalFlip, ShiftScaleRotate, Normalize, CropNonEmptyMaskIfExists, Resize, Compose,
-                            GaussNoise)
+                            RandomBrightnessContrast, VerticalFlip, RandomBrightness, RandomContrast)
 from albumentations.pytorch import ToTensor
 import sys
 
@@ -62,111 +63,123 @@ def get_transforms(phase, mean, std):
             list_transforms.extend(
                 [CropNonEmptyMaskIfExists(crop_image_size[0], crop_image_size[1], p=1),
                  HorizontalFlip(p=0.5),
+                 VerticalFlip(p=0.5),
+                 RandomBrightnessContrast(p=0.2, brightness_limit=0.2, contrast_limit=0.1)
                  ])
         else:
             list_transforms.extend(
                 [HorizontalFlip(p=0.5),
-                 ])
+                 VerticalFlip(p=0.5),
+                 RandomBrightnessContrast(p=0.2, brightness_limit=0.2, contrast_limit=0.1)
+                 ]
+            )
     list_transforms.extend(
         [
             Normalize(mean=mean, std=std, p=1),
-            ToTensor(),
+            ToTensor()
         ]
     )
     list_trfms = Compose(list_transforms)
     return list_trfms
 
-
 def provider_trai_test_split(
-        data_folder,
-        df_path,
-        phase,
-        mean=None,
-        std=None,
-        batch_size=8,
-        num_workers=4,
-):
-    '''
-    Returns dataloader for the model training
-    '''
+            data_folder,
+            df_path,
+            phase,
+            mean=None,
+            std=None,
+            batch_size=8,
+            num_workers=4,
+    ):
+        '''
+        Returns dataloader for the model training
+        '''
 
-    df = pd.read_csv(df_path)
-    # https://www.kaggle.com/amanooo/defect-detection-starter-u-net
-    df['ImageId'], df['ClassId'] = zip(*df['ImageId_ClassId'].str.split('_'))
-    df['ClassId'] = df['ClassId'].astype(int)
-    df = df.pivot(index='ImageId', columns='ClassId', values='EncodedPixels')
-    df['defects'] = df.count(axis=1)
+        df = pd.read_csv(df_path)
+        # https://www.kaggle.com/amanooo/defect-detection-starter-u-net
+        df['ImageId'], df['ClassId'] = zip(*df['ImageId_ClassId'].str.split('_'))
+        df['ClassId'] = df['ClassId'].astype(int)
+        df = df.pivot(index='ImageId', columns='ClassId', values='EncodedPixels')
+        df['defects'] = df.count(axis=1)
 
-    train_df, val_df = train_test_split(df, test_size=0.2, stratify=df["defects"], random_state=69)
-    df = train_df if phase == "train" else val_df
-    image_dataset = SteelDataset(df, data_folder, mean, std, phase)
-    dataloader = DataLoader(
-        image_dataset,
-        batch_size=batch_size,
-        num_workers=num_workers,
-        pin_memory=True,
-        shuffle=True,
-    )
-    return dataloader
-
+        train_df, val_df = train_test_split(df, test_size=0.2, stratify=df["defects"], random_state=69)
+        df = train_df if phase == "train" else val_df
+        image_dataset = SteelDataset(df, data_folder, mean, std, phase)
+        dataloader = DataLoader(
+            image_dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=True,
+            shuffle=True,
+        )
+        return dataloader
 
 def provider_cv(
-        fold,
-        total_folds,
-        data_folder,
-        df_path,
-        phase,
-        mean=None,
-        std=None,
-        batch_size=8,
+            fold,
+            total_folds,
+            data_folder,
+            df_path,
+            phase,
+            mean=None,
+            std=None,
+            batch_size=8,
+            num_workers=4,
+    ):
+        """
+
+        :param fold:
+        :param total_folds:
+        :param data_folder:
+        :param df_path:
+        :param phase:
+        :param mean:
+        :param std:
+        :param batch_size:
+        :param num_workers:
+        :return:
+
+        # example of usage
+        dataloader = provider_cv(
+        fold=0,
+        total_folds=5,
+        data_folder=data_folder,
+        df_path=train_df_path,
+        phase="train",
+        mean = (0.485, 0.456, 0.406),
+        std = (0.229, 0.224, 0.225),
+        batch_size=16,
         num_workers=4,
-):
-    """
-
-    :param fold:
-    :param total_folds:
-    :param data_folder:
-    :param df_path:
-    :param phase:
-    :param mean:
-    :param std:
-    :param batch_size:
-    :param num_workers:
-    :return:
-
-    # example of usage
-    dataloader = provider_cv(
-    fold=0,
-    total_folds=5,
-    data_folder=data_folder,
-    df_path=train_df_path,
-    phase="train",
-    mean = (0.485, 0.456, 0.406),
-    std = (0.229, 0.224, 0.225),
-    batch_size=16,
-    num_workers=4,
-)
-    """
-    if isDebug:
-        df = pd.read_csv(df_path).head(200)
-    else:
-        df = pd.read_csv(df_path)
-
-    df['ImageId'], df['ClassId'] = zip(*df['ImageId_ClassId'].str.split('_'))
-    df['ClassId'] = df['ClassId'].astype(int)
-    df = df.pivot(index='ImageId', columns='ClassId', values='EncodedPixels')
-    df['defects'] = df.count(axis=1)
-
-    kfold = KFold(total_folds, shuffle=True, random_state=69) #StratifiedKFold(total_folds, shuffle=True, random_state=69)
-    train_idx, val_idx = list(kfold.split(df))[fold] #, df["defects"]
-    train_df, val_df = df.iloc[train_idx], df.iloc[val_idx]
-    df = train_df if phase == "train" else val_df
-    image_dataset = SteelDataset(df, data_folder, mean, std, phase)
-    dataloader = DataLoader(
-        image_dataset,
-        batch_size=batch_size,
-        num_workers=num_workers,
-        pin_memory=True,
-        shuffle=True,
     )
-    return dataloader
+        """
+        if isDebug:
+            df = pd.read_csv(df_path).head(200)
+            df['ImageId'], df['ClassId'] = zip(*df['ImageId_ClassId'].str.split('_'))
+            df['ClassId'] = df['ClassId'].astype(int)
+            df = df.pivot(index='ImageId', columns='ClassId', values='EncodedPixels')
+            df['defects'] = df.count(axis=1)
+
+            kfold = KFold(total_folds, shuffle=True,
+                          random_state=69)  # StratifiedKFold(total_folds, shuffle=True, random_state=69)
+            train_idx, val_idx = list(kfold.split(df))[fold]  # , df["defects"]
+            train_df, val_df = df.iloc[train_idx], df.iloc[val_idx]
+
+        else:
+            df = pd.read_csv(df_path)
+            df['ImageId'], df['ClassId'] = zip(*df['ImageId_ClassId'].str.split('_'))
+            df['ClassId'] = df['ClassId'].astype(int)
+            df = df.pivot(index='ImageId', columns='ClassId', values='EncodedPixels')
+            df['defects'] = df.count(axis=1)
+            folds_idx = joblib.load(FOLDS_ids)
+            train_idx, val_idx = list(folds_idx)[fold]
+            train_df, val_df = df.iloc[train_idx], df.iloc[val_idx]
+
+        df = train_df if phase == "train" else val_df
+        image_dataset = SteelDataset(df, data_folder, mean, std, phase)
+        dataloader = DataLoader(
+            image_dataset,
+            batch_size=batch_size,
+            num_workers=num_workers,
+            pin_memory=True,
+            shuffle=True,
+        )
+        return dataloader
