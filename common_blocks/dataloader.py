@@ -61,16 +61,16 @@ def get_transforms(phase, mean, std):
     if phase == "train":
         if crop_image_size is not None:
             list_transforms.extend(
-                [CropNonEmptyMaskIfExists(crop_image_size[0], crop_image_size[1], p=1),
+                [CropNonEmptyMaskIfExists(crop_image_size[0], crop_image_size[1], p=0.85),
                  HorizontalFlip(p=0.5),
                  VerticalFlip(p=0.5),
-                 RandomBrightnessContrast(p=0.2, brightness_limit=0.2, contrast_limit=0.1)
+                 RandomBrightnessContrast(p=0.1, brightness_limit=0.1, contrast_limit=0.1)
                  ])
         else:
             list_transforms.extend(
                 [HorizontalFlip(p=0.5),
                  VerticalFlip(p=0.5),
-                 RandomBrightnessContrast(p=0.2, brightness_limit=0.2, contrast_limit=0.1)
+                 RandomBrightnessContrast(p=0.1, brightness_limit=0.1, contrast_limit=0.1)
                  ]
             )
     list_transforms.extend(

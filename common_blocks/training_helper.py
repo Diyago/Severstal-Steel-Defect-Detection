@@ -24,7 +24,7 @@ from .losses import BCEDiceLoss, FocalLoss
 
 sys.path.append('..')
 from configs.train_params import *
-from .optimizers import RAdam
+from .optimizers import RAdam, Over9000, Adam
 
 
 class Trainer_cv(object):
@@ -35,7 +35,7 @@ class Trainer_cv(object):
         self.total_folds = TOTAL_FOLDS
         self.num_workers = 4
         self.batch_size = batch_size
-        self.accumulation_steps = 128 // self.batch_size['train']
+        self.accumulation_steps = 64 // self.batch_size['train']
         self.lr = LEARNING_RATE
         self.num_epochs = num_epochs
         self.best_metric = INITIAL_MINIMUM_DICE  # float("inf")
@@ -43,8 +43,12 @@ class Trainer_cv(object):
         self.device = torch.device("cuda:0")
         torch.set_default_tensor_type("torch.cuda.FloatTensor")
         self.net = model
-        self.criterion = BCEDiceLoss()   # BCEDiceLoss()#FocalLoss(num_class=4)  # BCEDiceLoss()  # torch.nn.BCEWithLogitsLoss()
-        self.optimizer = RAdam(self.net.parameters(), lr=self.lr)  # optim.Adam(self.net.parameters(), lr=self.lr)
+        self.criterion = BCEDiceLoss()  # BCEDiceLoss()#FocalLoss(num_class=4)  # BCEDiceLoss()  # torch.nn.BCEWithLogitsLoss()
+        self.optimizer = Adam(
+            [
+                {'params': self.net.decoder.parameters(), 'lr': self.lr},
+                {'params': self.net.encoder.parameters(), 'lr': self.lr / 2},
+            ])  # optim.Adam(self.net.parameters(), lr=self.lr)
         self.scheduler = ReduceLROnPlateau(self.optimizer, factor=0.9, mode="min", patience=2, verbose=True)
         self.net = self.net.to(self.device)
         cudnn.benchmark = True
