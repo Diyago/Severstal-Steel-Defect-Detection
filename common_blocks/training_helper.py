@@ -20,7 +20,8 @@ from matplotlib import pyplot as plt
 from .metric import Meter, epoch_log
 from .dataloader import provider_cv, provider_trai_test_split
 import sys
-from .losses import BCEDiceLoss, FocalLoss
+from .losses import BCEDiceLoss, FocalLoss, JaccardLoss
+from .lovasz_losses import LovaszLoss, LovaszLossSymmetric
 
 sys.path.append('..')
 from configs.train_params import *
@@ -30,7 +31,7 @@ from .optimizers import RAdam, Over9000, Adam
 class Trainer_cv(object):
     '''This class takes care of training and validation of our model'''
 
-    def __init__(self, model, num_epochs, current_fold=0, batch_size={"train": 4, "val": 4}):
+    def __init__(self, model, num_epochs, current_fold=0, batch_size={"train": 4, "val": 4}, optimizer_state=None):
         self.current_fold = current_fold
         self.total_folds = TOTAL_FOLDS
         self.num_workers = 4
@@ -42,13 +43,16 @@ class Trainer_cv(object):
         self.phases = ["train", "val"]
         self.device = torch.device("cuda:0")
         torch.set_default_tensor_type("torch.cuda.FloatTensor")
-        self.net = model
-        self.criterion = BCEDiceLoss()  # BCEDiceLoss()#FocalLoss(num_class=4)  # BCEDiceLoss()  # torch.nn.BCEWithLogitsLoss()
-        self.optimizer = Adam(
-            [
-                {'params': self.net.decoder.parameters(), 'lr': self.lr},
-                {'params': self.net.encoder.parameters(), 'lr': self.lr / 2},
-            ])  # optim.Adam(self.net.parameters(), lr=self.lr)
+        self.net = model #torch.nn.BCEWithLogitsLoss()
+        self.criterion = JaccardLoss()#JaccardLoss()#LovaszLossSymmetric(per_image=True, classes=[0,1,2,3])
+        # BCEDiceLoss()  # BCEDiceLoss()#FocalLoss(num_class=4)  # BCEDiceLoss()  # torch.nn.BCEWithLogitsLoss()
+        self.optimizer = RAdam([
+            {'params': self.net.decoder.parameters(), 'lr': self.lr},
+            {'params': self.net.encoder.parameters(), 'lr': self.lr},
+        ])  # optim.Adam(self.net.parameters(), lr=self.lr)
+
+        if optimizer_state is not None:
+            self.optimizer.load_state_dict(optimizer_state)
         self.scheduler = ReduceLROnPlateau(self.optimizer, factor=0.9, mode="min", patience=2, verbose=True)
         self.net = self.net.to(self.device)
         cudnn.benchmark = True
@@ -124,7 +128,7 @@ class Trainer_cv(object):
                 "epoch": epoch,
                 "best_metric": self.best_metric,
                 "state_dict": self.net.state_dict(),
-                "optimizer": self.optimizer.state_dict(),
+                "optimizer": self.optimizer.state_dict()
             }
             val_loss, val_dice = self.iterate(epoch, "val")
             self.scheduler.step(val_loss)

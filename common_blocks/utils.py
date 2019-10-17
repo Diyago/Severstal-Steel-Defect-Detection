@@ -91,6 +91,8 @@ def load_model_unet(_model_weights, is_inference=False):
         model.to(device)
         state = torch.load(_model_weights)  # , map_location=lambda storage, loc: storage)
         model.load_state_dict(state["state_dict"])
+        optimizer_state = state['optimizer']
+        return model, optimizer_state
         # new_state_dict = OrderedDict()
         #
         # for k, v in state['state_dict'].items():
