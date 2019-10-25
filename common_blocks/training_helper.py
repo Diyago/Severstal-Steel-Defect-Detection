@@ -20,7 +20,7 @@ from matplotlib import pyplot as plt
 from .metric import Meter, epoch_log
 from .dataloader import provider_cv, provider_trai_test_split
 import sys
-from .losses import BCEDiceLoss, FocalLoss, JaccardLoss
+from .losses import BCEDiceLoss, FocalLoss, JaccardLoss, DiceLoss
 from .lovasz_losses import LovaszLoss, LovaszLossSymmetric
 
 sys.path.append('..')
@@ -36,15 +36,15 @@ class Trainer_cv(object):
         self.total_folds = TOTAL_FOLDS
         self.num_workers = 4
         self.batch_size = batch_size
-        self.accumulation_steps = 64 // self.batch_size['train']
+        self.accumulation_steps = 32 // self.batch_size['train']
         self.lr = LEARNING_RATE
         self.num_epochs = num_epochs
         self.best_metric = INITIAL_MINIMUM_DICE  # float("inf")
         self.phases = ["train", "val"]
         self.device = torch.device("cuda:0")
         torch.set_default_tensor_type("torch.cuda.FloatTensor")
-        self.net = model #torch.nn.BCEWithLogitsLoss()
-        self.criterion = JaccardLoss()#JaccardLoss()#LovaszLossSymmetric(per_image=True, classes=[0,1,2,3])
+        self.net = model  # torch.nn.BCEWithLogitsLoss()
+        self.criterion = BCEDiceLoss()  # JaccardLoss()#LovaszLossSymmetric(per_image=True, classes=[0,1,2,3])
         # BCEDiceLoss()  # BCEDiceLoss()#FocalLoss(num_class=4)  # BCEDiceLoss()  # torch.nn.BCEWithLogitsLoss()
         self.optimizer = RAdam([
             {'params': self.net.decoder.parameters(), 'lr': self.lr},
@@ -53,7 +53,7 @@ class Trainer_cv(object):
 
         if optimizer_state is not None:
             self.optimizer.load_state_dict(optimizer_state)
-        self.scheduler = ReduceLROnPlateau(self.optimizer, factor=0.9, mode="min", patience=2, verbose=True)
+        self.scheduler = ReduceLROnPlateau(self.optimizer, factor=0.9, mode="min", patience=3, verbose=True)
         self.net = self.net.to(self.device)
         cudnn.benchmark = True
         self.dataloaders = {
