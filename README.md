@@ -19,6 +19,3 @@ Project structure:
    
 * **train.py** - main code for training
 * **inference.py** (TODO - currently in kaggle kernels)
-
-TODO
-1. Try train single model on train
