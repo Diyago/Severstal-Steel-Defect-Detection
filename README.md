@@ -1,5 +1,8 @@
 # Severstal-Steel-Defect-Detection
 Can you detect and classify defects in steel? Segmentation in Pytorch
+https://www.kaggle.com/c/severstal-steel-defect-detection/overview
+
+31 place solution
 
 Project structure:
  * **common_blocks** - classes and functions for training
