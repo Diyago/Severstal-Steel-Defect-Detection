@@ -27,7 +27,12 @@ Project structure:
 **SOLUTION**
 
 **Team - [ods.ai] stainless**
-Insaf Ashrapov, Igor Krashenyi, Pavel Pleskov, Anton Zakharenkov, Nikolai Popov
+
+- Insaf Ashrapov
+- Igor Krashenyi
+- Pavel Pleskov
+- Anton Zakharenkov
+- Nikolai Popov
 
 **Models** 
 We tried almost every type of model from qubvel`s segmentation model library - unet, fpn, pspnet with different encoders from resnet to senet152. FPN with se-resnext50 outperformed other models. Lighter models like resnet34 performed aren't well enough but were useful in the final blend. Se-resnext101 possibly could perform much better with more time training, but we didn’t test that.
