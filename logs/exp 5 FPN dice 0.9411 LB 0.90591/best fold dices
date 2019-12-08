@@ -1,9 +1,0 @@
-Training FPN resnet32 +   increased batch size with accumation 64, trained on crops and full. RADAM + bcedice loss. Using Kfold and Stratified kfold
-metric DICE
-
-MEAN dice  (0.9402+0.9421)/2
-0.9411
-
-
- 
- 
