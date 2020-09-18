@@ -1,3 +1,5 @@
+[![forthebadge made-with-python](http://ForTheBadge.com/images/badges/made-with-python.svg)](https://www.python.org/)
+
 # Severstal-Steel-Defect-Detection
 Can you detect and classify defects in steel? Segmentation in Pytorch
 https://www.kaggle.com/c/severstal-steel-defect-detection/overview
